@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # .env must be present (copiar .env.template y editar)
-if [ ! -f /app/.env ]; then
+if [ ! -f .env ]; then
   echo ".env not found. Copy .env.template to .env and set variables."
   exec sleep infinity
 fi
