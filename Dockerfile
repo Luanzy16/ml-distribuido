@@ -1,5 +1,5 @@
 # Usa Python slim para que sea liviano
-FROM python:3.14-slim
+FROM python:3.12-slim
 
 # Set workdir
 WORKDIR /app
