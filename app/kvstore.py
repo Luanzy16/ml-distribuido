@@ -1,78 +1,33 @@
-# app/kvstore.py
-import time
 import asyncio
-import httpx
-from typing import Dict, Any, List
+import time
 
 class KVStore:
-    def __init__(self, node_id: str):
+    def __init__(self, node_id):
         self.node_id = node_id
-        # store: key -> {value, version, ts}
-        self.store: Dict[str, Dict[str, Any]] = {}
-        self._client = httpx.AsyncClient(timeout=5.0)
+        self.store = {}        # key -> value
+        self.versions_dict = {} # key -> version
 
-    def put(self, key: str, value: Any):
-        now = time.time()
-        cur = self.store.get(key)
-        if cur:
-            ver = cur["version"] + 1
-        else:
-            ver = 1
-        self.store[key] = {"value": value, "version": ver, "ts": now}
-        return True
+    def put(self, key, value):
+        self.store[key] = value
+        self.versions_dict[key] = self.versions_dict.get(key, 0) + 1
 
-    def get(self, key: str):
-        cur = self.store.get(key)
-        if not cur:
-            return None
-        return {"value": cur["value"], "version": cur["version"], "ts": cur["ts"]}
+    def get(self, key):
+        return self.store.get(key)
 
     def versions(self):
-        return {k: v["version"] for k, v in self.store.items()}
+        return self.versions_dict.copy()
 
-    async def replicate(self, key: str, peers: str, replicate_to: int = 2):
-        peer_list = [p for p in peers.split(",") if p]
-        payload = {"value": self.store[key]["value"], "version": self.store[key]["version"]}
-        tasks = []
-        for p in peer_list[:replicate_to]:
-            tasks.append(self._push(p, key, payload))
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+    async def replicate(self, key, peers, replicate_to=1):
+        # placeholder: real network calls would go here
+        await asyncio.sleep(0.1)
 
-    async def _push(self, peer: str, key: str, payload: Dict[str, Any]):
-        try:
-            await self._client.put(f"http://{peer}/kv/{key}", json={"value": payload["value"], "version": payload["version"]})
-        except Exception:
-            pass
-
-    async def background_reconcile(self, peers: str):
-        # Periodically check peers' kv_versions and request newer keys
+    async def background_reconcile(self, peers):
         while True:
-            peer_list = [p for p in peers.split(",") if p]
-            for p in peer_list:
-                try:
-                    r = await self._client.get(f"http://{p}/state")
-                    if r.status_code == 200:
-                        remote = r.json()
-                        remote_versions = remote.get("kv_versions", {})
-                        for k, rv in remote_versions.items():
-                            myv = self.versions().get(k, 0)
-                            if rv > myv:
-                                # fetch from peer
-                                try:
-                                    res = await self._client.get(f"http://{p}/kv/{k}")
-                                    if res.status_code == 200:
-                                        data = res.json()
-                                        # apply
-                                        self.store[k] = {"value": data.get("value"), "version": data.get("version"), "ts": data.get("ts", time.time())}
-                                except Exception:
-                                    pass
-                except Exception:
-                    pass
-            await asyncio.sleep(10)
+            # in a real system, we could fetch missing keys
+            await asyncio.sleep(5)
 
-    # handler used by GossipService to apply remote kv puts (sync)
-    def handle_remote_put(self, key: str, value: Any, version: int):
-        cur = self.store.get(key)
-        if (cur is None) or (version > cur["version"]):
-            self.store[key] = {"value": value, "version": version, "ts": time.time()}
+    def handle_remote_put(self, key, value, version):
+        local_version = self.versions_dict.get(key, 0)
+        if version > local_version:
+            self.store[key] = value
+            self.versions_dict[key] = version

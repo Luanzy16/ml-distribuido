@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# .env must be present (copiar .env.template y editar)
-if [ ! -f .env ]; then
+# .env debe existir
+if [ ! -f /app/.env ]; then
   echo ".env not found. Copy .env.template to .env and set variables."
   exec sleep infinity
 fi
 
-# load env
+# carga variables de entorno
 export $(grep -v '^#' .env | xargs)
 
 echo "Starting node ${NODE_ID} on port ${PORT}"
