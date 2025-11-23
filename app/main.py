@@ -13,7 +13,6 @@ from .visual import plot_predictions
 from .models.linear_regression import LinearRegression
 from .models.logistic_regression import LogisticRegression
 from .models.svm import SVM
-from .models.decision_tree import DecisionTree
 from .models.mlp import MLP
 
 cfg = load_env()
