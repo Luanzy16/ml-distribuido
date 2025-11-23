@@ -78,8 +78,6 @@ async def train_model(model_name: str, X: List[List[float]], y: List[float]):
         model = LogisticRegression()
     elif model_name == "svm":
         model = SVM()
-    elif model_name == "decision_tree":
-        model = DecisionTree()
     elif model_name == "mlp":
         model = MLP(input_size=X_np.shape[1])
     else:
