@@ -9,7 +9,7 @@ from .gossip import GossipService
 from .scheduler import Scheduler
 from .kvstore import KVStore
 from .utils import load_env
-from .visualization import plot_predictions
+from .visual import plot_predictions
 from .models.linear_regression import LinearRegression
 from .models.logistic_regression import LogisticRegression
 from .models.svm import SVM
